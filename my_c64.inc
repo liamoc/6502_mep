@@ -1,6 +1,7 @@
 
 
-
+MAX_HEIGHT=12
+MAX_WIDTH=20
 
 .PROC init 
     lda #0

@@ -8,10 +8,10 @@ main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc
 main.bbc: main.s bbc.cfg
 	cl65 -t bbc -C MyBBC.cfg --no-target-lib main.s -o main.bbc
 
-main.as: main.s apple2_rand.inc my_apple2.inc MyA2.cfg minesweeper.inc
+main.as: main.s apple2_rand.inc my_apple2.inc MyA2.cfg minesweeper.inc apple_symbols.inc
 	cl65 -t apple2 -C MyA2.cfg main.s -o main.as
 
-tools/a2in: tools a2tools.c
+tools/a2in: tools/a2tools.c
 	cd tools && gcc -DUNIX a2tools.c -o a2in
 
 main.dsk: main.as tools/a2in tools/blank.dsk

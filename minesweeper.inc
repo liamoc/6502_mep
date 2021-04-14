@@ -11,12 +11,12 @@ BOTTOM_RIGHT  = %1000
 board:         .res 240, 0
 intersections: .res 240, 0
 difficulty:    .byte 46
-width:         .byte 20
-width_m1:      .byte 19
-height:        .byte 12
+width:         .byte MAX_WIDTH
+width_m1:      .byte (MAX_WIDTH-1)
+height:        .byte MAX_HEIGHT
 flags:         .byte 46
-size:          .byte 240
-size_m1:       .byte 220
+size:          .byte (MAX_WIDTH*MAX_HEIGHT)
+size_m1:       .byte (MAX_WIDTH*(MAX_HEIGHT-1))
 cursor:        .byte 0
 cursor_row:    .byte 0
 cursor_col:    .byte 0
@@ -34,7 +34,6 @@ cursor_col:    .byte 0
         sta intersections,x
         inx
     jmp :-
-
     ; place DIFFICULTY number of mines
 :   ldy #0
     ldx #0
@@ -132,6 +131,7 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_up 
+    CLEAR_CURSOR
     lda cursor_row
     cmp #0
     bne :+
@@ -147,6 +147,7 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_left
+    CLEAR_CURSOR
     lda cursor_col
     cmp #0
     bne :+
@@ -157,6 +158,7 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_down
+    CLEAR_CURSOR
     lda cursor_row
     clc
     adc #1
@@ -172,6 +174,7 @@ cursor_col:    .byte 0
 .ENDPROC 
 
 .PROC cursor_right
+    CLEAR_CURSOR
     lda cursor_col
     clc
     adc #1

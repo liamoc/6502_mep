@@ -7,14 +7,12 @@
 .ifdef __APPLE2__
 .include "apple2.inc"
 .MACRO INITIALISE_RANDOM
-lda $4E
+lda RNDL
 sta SEED0
 sta SEED3
-lda $4F
+lda RNDH
 sta SEED1
 sta SEED2
-jsr RAND
-jsr RAND
 .ENDMACRO
 .MACRO start_irq
 nop
@@ -22,13 +20,19 @@ nop
 .MACRO ack_irq
 rts
 .ENDMACRO
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
 .MACRO GETIN
-nop
+jsr apple_keyin
 .ENDMACRO 
 PTR2 = $FB
 PTR  = $FD
 TEMP  = $49
 TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+CHARSET = $4D
 BoardScreen = $0400
 .macro LDX_RANDOM
 lda #$FF
@@ -36,6 +40,8 @@ jsr RANDOM8
 tax
 .endmacro
 .elseif .defined(__ATARI__)
+.MACRO CLEAR_CURSOR
+.ENDMACRO
 .include "atari.inc"
 .MACRO INITIALISE_RANDOM
 nop
@@ -85,6 +91,8 @@ PTR  = $FD
     jmp $ea31
 .ENDMACRO
 
+.MACRO CLEAR_CURSOR
+.ENDMACRO
 .include "c64.inc"
 .macro INITIALISE_RANDOM
     lda #0
@@ -122,7 +130,11 @@ jsr $FFE4 ; GETIN kernal function
 .endmacro
 .endif
 
+.ifdef __APPLE2__
+.segment "LOWCODE"
+.else
 .CODE
+.endif
 Main:
   ;  lda #2
   ;  sta 710
@@ -131,6 +143,10 @@ Main:
     jsr setup_timer
     jmp main_menu
 
+.ifdef __APPLE2__
+.segment "HGR"
+.CODE
+.endif
 .include "minesweeper.inc"
 .ifdef __APPLE2__
 .include "my_apple2.inc"
@@ -155,11 +171,12 @@ Main:
 
 .PROC menu_loop
 .ifdef __APPLE2__
-KEY_FW = 135
-KEY_HW = 134
-KEY_HARDER = 142
-KEY_EASIER = 143
-KEY_START = $F
+KEY_FW = $95
+KEY_HW = $88
+KEY_HARDER = $8B
+KEY_EASIER = $8A
+KEY_START = $8D
+KEY_CHARSWITCH = $C3
 .elseif .defined(__ATARI__)
 KEY_FW = 135
 KEY_HW = 134
@@ -173,7 +190,7 @@ KEY_EASIER = $11
 KEY_HARDER = $91
 KEY_START = 136
 .endif
-    GETIN
+    GETIN  
     cmp #KEY_FW
     beq full_width
     cmp #KEY_EASIER
@@ -182,6 +199,15 @@ KEY_START = 136
     beq @half_width
     cmp #KEY_HARDER
     beq @more_difficulty
+.ifdef __APPLE2__
+    cmp #KEY_CHARSWITCH
+    bne :+
+    lda CHARSET
+    eor #$FF
+    sta CHARSET
+    jmp main_menu
+:   nop
+.endif
     cmp #KEY_START
     bne menu_loop
     jmp start_game
@@ -210,9 +236,9 @@ KEY_START = 136
     sta width
     lda #9 
     sta width_m1
-    lda #120
+    lda #(MAX_HEIGHT*10)
     sta size
-    lda #110
+    lda #((MAX_HEIGHT-1)*10)
     sta size_m1
     lda #0
     sta cursor_col
@@ -221,13 +247,13 @@ KEY_START = 136
     jsr print_board_size
     jmp menu_loop
 full_width:
-    lda #20
+    lda #(MAX_WIDTH)
     sta width
-    lda #19 
+    lda #(MAX_WIDTH-1)
     sta width_m1
-    lda #240
+    lda #(MAX_WIDTH*MAX_HEIGHT)
     sta size
-    lda #220
+    lda #(MAX_WIDTH*(MAX_HEIGHT-1))
     sta size_m1
     lda #0
     sta cursor_col
@@ -237,25 +263,27 @@ full_width:
     jmp menu_loop
 .ENDPROC
 .PROC main_menu
+    .ifndef __APPLE2__
     jsr stop_music
+    .endif
     lda #26
     sta difficulty
-    lda #20
+    lda #(MAX_WIDTH)
     sta width 
-    lda #19
+    lda #(MAX_WIDTH-1)
     sta width_m1
-    lda #12
+    lda #(MAX_HEIGHT)
     sta height
-    lda #240
+    lda #(MAX_WIDTH*(MAX_HEIGHT))
     sta size 
-    lda #220
+    lda #(MAX_WIDTH*(MAX_HEIGHT-1))
     sta size_m1 
     hide_cursor
 
     jsr initialise_board
     jsr reveal_zeros
-    jsr print_board
-    jsr print_intersections
+    jsr print_board    
+    jsr print_intersections    
     jsr print_horizontals
     jsr print_verticals
     lda #46
@@ -272,16 +300,20 @@ full_width:
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
+    .ifndef __APPLE2__
     jsr stop_music
+    .endif
     lda width
     cmp #10
     bne :+
     jsr draw_halfwidth_backdrop
 :   jsr setup_sound
+    .ifndef __APPLE2__
     jsr start_music
+    .endif
     jsr position_cursor_sprite
-    jsr print_static_hud    
     jsr start_clock
+    jsr print_static_hud    
     jmp main_loop
 .ENDPROC
 
@@ -296,16 +328,23 @@ full_width:
 
 .PROC main_loop
 .ifdef __APPLE2__
-KEY_RIGHT = 135
+
+KEY_FW = $95
+KEY_HW = $88
+KEY_HARDER = $8B
+KEY_EASIER = $8A
+KEY_START = $8D
+
+KEY_RIGHT = $95
 KEY_RIGHT2 = 58 ; d
-KEY_LEFT = 134
+KEY_LEFT = $88
 KEY_LEFT2 = 63 ; a
-KEY_UP = 142
+KEY_UP = $8B
 KEY_UP2 = 46 ; w
-KEY_DOWN = 143
+KEY_DOWN = $8A
 KEY_DOWN2 = 62 ; s
-KEY_FLAG = 12
-KEY_DIG = $21
+KEY_FLAG = $8D
+KEY_DIG = $A0
 .elseif .defined(__ATARI__)
 KEY_RIGHT = 135
 KEY_RIGHT2 = 58 ; d
@@ -352,22 +391,27 @@ KEY_DIG = $20
     beq @flag
     jmp main_loop
 @right:
+    CLEAR_CURSOR
     jsr cursor_right
     jsr position_cursor_sprite
     jmp main_loop
 @down:
+    CLEAR_CURSOR
     jsr cursor_down
     jsr position_cursor_sprite
     jmp main_loop
 @up:
+    CLEAR_CURSOR
     jsr cursor_up
     jsr position_cursor_sprite
     jmp main_loop
 @left:
+    CLEAR_CURSOR
     jsr cursor_left
     jsr position_cursor_sprite
     jmp main_loop
 @dig:
+    CLEAR_CURSOR
     jsr dig
     jsr dig_sound
     jsr update_display
@@ -379,16 +423,20 @@ KEY_DIG = $20
     cmp #0
     beq :+
     jmp won_screen
-:   jmp main_loop
+:   jsr position_cursor_sprite
+    jmp main_loop
 @flag:
+    CLEAR_CURSOR
     jsr flag
     jsr update_display
-    jsr print_hud
+    jsr print_hud 
+    jsr position_cursor_sprite
     jmp main_loop    
 .ENDPROC
 
 .PROC clock
     inc musiccounter
+.ifndef __APPLE2__
     lda musiccounter    
     cmp #8
     bne :+
@@ -404,8 +452,19 @@ KEY_DIG = $20
     beq @done
 
     inc subcounter
+@subcounter_cap = 56
+.else 
+@subcounter_cap = 255
+    lda musiccounter
+    cmp #5
+    bne :+ 
+        lda #0
+        sta musiccounter
+        inc subcounter
+:
+.endif
     lda subcounter
-    cmp #56    
+    cmp #@subcounter_cap
     bne @done
     lda #0
     sta subcounter
@@ -439,7 +498,7 @@ seconds10: .byte 0
 minutes10: .byte 0
 .ENDPROC
 
-
+.ifndef __APPLE2__
 MUTED      = %00000001
 NOT_MUTED  = %10000000
 PLAYING    = %00000010
@@ -574,6 +633,7 @@ state: .byte %00000000
     sta music::state
     rts
 .ENDPROC    
+.endif 
 ; 1 = muted
 ; 2 = playing
 ; 3 = concluding
@@ -595,6 +655,7 @@ state: .byte %00000000
     rts
 .ENDPROC
 
+.ifndef __APPLE2__ 
 .PROC print_horizontals
     ; PTR stores the current row in video ram
     ; Y stores the position in current row
@@ -699,34 +760,38 @@ state: .byte %00000000
 .byte ($20 | BLOCK_LO_COL_BG),($20 | SPACE_COL_BG),    ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
 .endif
 .ENDPROC
+.endif 
 
 
 .PROC display_clock
 .if .defined(__APPLE2__)
-@ScreenPos = $E000
+@ScreenPos = $06D0
+@Additive = 176
 .elseif .defined(__ATARI__)
 @ScreenPos = HudScreen+40
+@Additive = 48
 .elseif .defined(__C64__)
 @ScreenPos = $07C0
+@Additive = 48
 .endif
     lda clock::state
     cmp #0
     beq :+
     lda clock::minutes10
     clc
-    adc #48
+    adc #@Additive
     sta @ScreenPos
     lda clock::minutes
     clc
-    adc #48
+    adc #@Additive
     sta @ScreenPos+1
     lda clock::seconds10
     clc
-    adc #48
+    adc #@Additive
     sta @ScreenPos+3
     lda clock::seconds
     clc
-    adc #48
+    adc #@Additive
     sta @ScreenPos+4
 :   ack_irq
 .ENDPROC 
