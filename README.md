@@ -7,6 +7,7 @@ It compiles (using the provided makefile) using the `ca65` assembler from the `c
 
 - Atari 400, 800, and XE/XL series machines (`main.xex`)
 - Commodore 64 machines (`main.prg`)
+- Apple ][ (both monochrome and colour displays) (`main.dsk`), also works on later Apple II models.
 
-Work is currently in progress on Apple II and BBC Micro variants.
+Work is currently in progress on BBC Micro and other variants.
 
