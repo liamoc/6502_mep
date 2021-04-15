@@ -131,7 +131,6 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_up 
-    CLEAR_CURSOR
     lda cursor_row
     cmp #0
     bne :+
@@ -147,7 +146,6 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_left
-    CLEAR_CURSOR
     lda cursor_col
     cmp #0
     bne :+
@@ -158,7 +156,6 @@ cursor_col:    .byte 0
 .ENDPROC
 
 .PROC cursor_down
-    CLEAR_CURSOR
     lda cursor_row
     clc
     adc #1
@@ -174,7 +171,6 @@ cursor_col:    .byte 0
 .ENDPROC 
 
 .PROC cursor_right
-    CLEAR_CURSOR
     lda cursor_col
     clc
     adc #1
