@@ -5,7 +5,7 @@ main.xex: main.s MyAtari.cfg my_atari.inc minesweeper.inc
 main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc
 	cl65 -t c64 -C MyC64.cfg -u __EXEHDR__ main.s -o main.prg
 
-main.bbc: main.s MyBBC.cfg
+main.bbc: main.s MyBBC.cfg my_bbc.inc minesweeper.inc
 	cl65 -t bbc -C MyBBC.cfg --no-target-lib main.s -o main.bbc
 
 main.inf: main.bbc

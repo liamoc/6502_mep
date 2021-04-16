@@ -1,46 +1,39 @@
 ; main assembler part
 ;
 ; -> (c) 2012 C.Kr�ger <-
-.ifdef __BBC__
-; TODO
-
-PrintChar = $FFE3	;OSASCI - Print Ascii Character to scrn
-NewLine   = $FFE7	;OSNEWL - New Line
-
-	;Load in the address of the Message into the zero page
-	lda #>HelloWorld
-	sta $21				;H Byte
-	lda #<HelloWorld
-	sta $20				;L Byte
-	
-	jsr PrintStr		;Show to the screen
-	
-	jsr NewLine			;Start a new line
-
-	rts					;Return to basic
-
-
-PrintStr:
-	ldy #0				;Set Y to zero
-PrintStr_again:
-	lda ($20),y			;Load a character from addr in $20+Y 
-	
-	cmp #255			;If we got 255, we're done
-	beq PrintStr_Done
-	
-	jsr PrintChar		;Print Character
-	iny					;Inc Y and repeat
-	jmp PrintStr_again
-PrintStr_Done:
-	rts	
-
-HelloWorld:				;255 terminated string
-	.byte "Hello World",255
-	
-	
-	
-.else
-.ifdef __APPLE2__
+.if .defined(__BBC__)
+.MACRO INITIALISE_RANDOM
+lda $0240
+sta SEED0
+sta SEED3
+lda $0240
+sta SEED1
+sta SEED2
+.ENDMACRO
+.MACRO start_irq
+nop
+.ENDMACRO
+.MACRO ack_irq
+rts
+.ENDMACRO
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
+.MACRO GETIN
+JSR $FFE0
+.ENDMACRO 
+PTR2 = $FB
+PTR  = $FD
+TEMP  = $49
+TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.elseif .defined (__APPLE2__)
 .include "apple2.inc"
 .MACRO INITIALISE_RANDOM
 lda RNDL
@@ -69,7 +62,6 @@ TEMP2 = $4A
 CURSOR_ON = $4B
 CURSOR_ENABLED = $4C
 CHARSET = $4D
-BoardScreen = $0400
 .macro LDX_RANDOM
 lda #$FF
 jsr RANDOM8
@@ -184,7 +176,10 @@ Main:
 .CODE
 .endif
 .include "minesweeper.inc"
-.ifdef __APPLE2__
+.if .defined(__BBC__)
+.include "my_bbc.inc"
+.include "apple2_rand.inc"
+.elseif .defined(__APPLE2__)
 .include "my_apple2.inc"
 .include "apple2_rand.inc"
 .segment "EXEHDR"
@@ -206,7 +201,13 @@ Main:
 .CODE
 
 .PROC menu_loop
-.ifdef __APPLE2__
+.if .defined(__BBC__)
+KEY_FW = $15
+KEY_HW = $08
+KEY_HARDER = $0B
+KEY_EASIER = $0A
+KEY_START = $0D
+.elseif .defined(__APPLE2__)
 KEY_FW = $95
 KEY_HW = $88
 KEY_HARDER = $8B
@@ -299,7 +300,7 @@ full_width:
     jmp menu_loop
 .ENDPROC
 .PROC main_menu
-    .ifndef __APPLE2__
+    .if !(.defined(__APPLE2__) || .defined(__BBC__))
     jsr stop_music
     .endif
     lda #26
@@ -315,8 +316,9 @@ full_width:
     lda #(MAX_WIDTH*(MAX_HEIGHT-1))
     sta size_m1 
     hide_cursor
-
+    
     jsr initialise_board
+    jsr printy
     jsr reveal_zeros
     jsr print_board    
     jsr print_intersections    
@@ -336,7 +338,7 @@ full_width:
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-    .ifndef __APPLE2__
+    .if !(.defined(__APPLE2__) || .defined(__BBC__))
     jsr stop_music
     .endif
     lda width
@@ -344,7 +346,7 @@ full_width:
     bne :+
     jsr draw_halfwidth_backdrop
 :   jsr setup_sound
-    .ifndef __APPLE2__
+    .if !(.defined(__APPLE2__) || .defined(__BBC__))
     jsr start_music
     .endif
     jsr position_cursor_sprite
@@ -363,7 +365,20 @@ full_width:
 .ENDPROC 
 
 .PROC main_loop
-.ifdef __APPLE2__
+.if .defined(__BBC__)
+
+KEY_RIGHT = $05
+KEY_RIGHT2 = 68 ; d
+KEY_LEFT = $08
+KEY_LEFT2 = 65 ; a
+KEY_UP = $0B
+KEY_UP2 = 87 ; w
+KEY_DOWN = $0A
+KEY_DOWN2 = 83 ; s
+KEY_FLAG = $0D
+KEY_DIG = $20
+
+.elseif .defined(__APPLE2__)
 
 KEY_FW = $95
 KEY_HW = $88
@@ -472,7 +487,7 @@ KEY_DIG = $20
 
 .PROC clock
     inc musiccounter
-.ifndef __APPLE2__
+.if !(.defined(__APPLE2__) || .defined(__BBC__))
     lda musiccounter    
     cmp #8
     bne :+
@@ -534,7 +549,7 @@ seconds10: .byte 0
 minutes10: .byte 0
 .ENDPROC
 
-.ifndef __APPLE2__
+.if !(.defined(__APPLE2__) || .defined(__BBC__))
 MUTED      = %00000001
 NOT_MUTED  = %10000000
 PLAYING    = %00000010
@@ -691,7 +706,7 @@ state: .byte %00000000
     rts
 .ENDPROC
 
-.ifndef __APPLE2__ 
+.if !(.defined(__APPLE2__) || .defined(__BBC__))
 .PROC print_horizontals
     ; PTR stores the current row in video ram
     ; Y stores the position in current row
@@ -800,7 +815,10 @@ state: .byte %00000000
 
 
 .PROC display_clock
-.if .defined(__APPLE2__)
+.if .defined(__BBC__)
+@ScreenPos = $06D0
+@Additive = 176
+.elseif .defined(__APPLE2__)
 @ScreenPos = $06D0
 @Additive = 176
 .elseif .defined(__ATARI__)
@@ -831,6 +849,5 @@ state: .byte %00000000
     sta @ScreenPos+4
 :   ack_irq
 .ENDPROC 
-.endif
 .DATA
 END:

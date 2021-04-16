@@ -651,16 +651,3 @@ rts
     rts
     rts
 .ENDPROC
-.PROC printy
-            COUT = $FDED
-            LDX    #0
-            LDA    MSG,X          ; load initial char
-PRINTCHAR:  JSR    COUT
-            INX
-            LDA    MSG,X
-            BNE    PRINTCHAR
-            JMP $3D0 ; warmstart
-MSG: AS "Hello world, Apple, from Liam!"
-            .byte $8D            ; CR with high-bit set
-            .byte $00
-.ENDPROC
