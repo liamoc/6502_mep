@@ -649,5 +649,4 @@ rts
     jmp @loop
 @done:
     rts
-    rts
 .ENDPROC

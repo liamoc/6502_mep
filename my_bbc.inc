@@ -16,7 +16,7 @@ MAX_HEIGHT=12
     ldy #0
 :   cpy #8
     beq :+
-    lda #$FF
+    lda #%00001111
     eor (PTR),Y
     sta (PTR),Y
     iny
@@ -46,266 +46,109 @@ MAX_HEIGHT=12
     tax
     rts 
 symbols:
-.byte %01010000
-.byte %10100000
-.byte %01010000
-.byte %10100000
-.byte %01010000
-.byte %10100000
-.byte %01010000
-.byte %10100000
-
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %11110000
-.byte %11110000
-
-.byte %00000000
-.byte %11110000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %11110000
-.byte %11110000
-
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01110000
-.byte %11110000
-
-.byte %00010000
-.byte %11110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-.byte %00110000
-
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00010000
-.byte %00110000
-
-.byte %00000000
-.byte %01110000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-.byte %01000000
-
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %10000000
-.byte %01000000
-
-.byte %01000000
-.byte %10000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-
-.byte %00110000
-.byte %00010000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-
-.byte %01000000
-.byte %10000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00010000
-.byte %00110000
-
-.byte %00110000
-.byte %00010000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %00000000
-.byte %10000000
-.byte %01000000
-
-
-.byte %00000000
-.byte %01100110
-.byte %11011101
-.byte %10011001
-.byte %10011001
-.byte %10111011
-.byte %01100110
-.byte %00000000
-
-.byte %00000000
-.byte %01100110
-.byte %11101110
-.byte %01100110
-.byte %01100110
-.byte %01100110
-.byte %11111111
-.byte %00000000
-
-.byte %00000000
-.byte %01100110
-.byte %11011101
-.byte %00110011
-.byte %01100110
-.byte %11001100
-.byte %11111111
-.byte %00000000
-
-.byte %00000000
-.byte %11101110
-.byte %00110011
-.byte %11101110
-.byte %00110011
-.byte %00110011
-.byte %11101110
-.byte %00000000
-
-.byte %00000000
-.byte %10111011
-.byte %10111011
-.byte %11111111
-.byte %00110011
-.byte %00110011
-.byte %00110011
-.byte %00000000
-
-.byte %00000000
-.byte %11111111
-.byte %11001100
-.byte %11101110
-.byte %00110011
-.byte %00110011
-.byte %11101110
-.byte %00000000
-
-.byte %00000000
-.byte %01110111
-.byte %11001100
-.byte %11101110
-.byte %11011101
-.byte %10111011
-.byte %01100110
-.byte %00000000
-
-.byte %00000000
-.byte %11111111
-.byte %00110011
-.byte %00110011
-.byte %01100110
-.byte %01100110
-.byte %11001100
-.byte %11001100
-
-.byte %00000000
-.byte %01101110
-.byte %10111011
-.byte %11101110
-.byte %10111011
-.byte %10111011
-.byte %01101110
-.byte %00000000
-
-.byte %00000000
-.byte %01100110
-.byte %10111011
-.byte %10101010
-.byte %01110111
-.byte %00110011
-.byte %11101110
-.byte %00000000
-
-.byte %11110000
-.byte %10010110
-.byte %10010110
-.byte %10110100
-.byte %10110100
-.byte %10100100
-.byte %10110100
-.byte %11100000
-.byte %00000000
-
-.byte %00000110
-.byte %00001111
-.byte %00001111
-.byte %01101111
-.byte %00001111
-.byte %00001111
-.byte %00000110
+.include "bbc_symbols.inc"
 .ENDPROC
-.proc draw_cursor
-    rts
-.endproc
+
+.PROC draw_symbol2
+    txa
+    pha
+    tya
+    pha
+    ldx TEMP
+    ldy #0
+:   cpy #8
+    beq :+
+    lda symbols2,X
+    and TEMP2
+    sta (PTR),Y
+    iny
+    inx
+    jmp :-
+:   pla
+    tay
+    pla
+    tax
+    rts 
+symbols2:
+.include "bbc_symbols2.inc"
+.ENDPROC
+
+.PROC draw_symbol2_shifted
+    txa
+    pha
+    tya
+    pha
+    ldx TEMP
+    ldy #0
+:   cpy #8
+    beq :+
+    lda draw_symbol2::symbols2,X
+    and #$0F
+    lsr
+    ora (PTR),Y
+    sta (PTR),Y
+    iny
+    inx
+    jmp :-
+:   pla
+    tay
+    pla
+    tax
+    rts 
+.ENDPROC
+.macro draw_string_shadow len, addr
+    
+    lda #$FF
+    sta TEMP2
+    ldx #0
+:   cpx #len 
+    beq :++
+    lda addr,X
+    asl
+    asl
+    asl
+    sta TEMP
+    jsr draw_symbol2
+    jsr draw_symbol2_shifted
+    lda PTR
+    clc
+    adc #8
+    sta PTR
+    bcc :+
+        inc PTR+1
+:   inx 
+    jmp :--
+    : 
+.endmacro
+.macro draw_string len, addr, mask
+    lda mask
+    sta TEMP2
+    ldx #0
+:   cpx #len 
+    beq :+++
+    lda addr,X
+    cmp #0
+    beq :+
+    asl
+    asl
+    asl
+    sta TEMP
+    jsr draw_symbol2
+:   lda PTR
+    clc
+    adc #8
+    sta PTR
+    bcc :+
+        inc PTR+1
+:   inx 
+    jmp :---
+    : 
+.endmacro
 
 .PROC init
 OSWRCH = $FFEE
 OSBYTE = $FFF4
+sei
     LDA #22
     JSR OSWRCH
     LDA #$5
@@ -316,7 +159,14 @@ OSBYTE = $FFF4
     JSR OSWRCH
     LDA #0
     JSR OSWRCH
-   
+    lda #65 
+    jsr $FFE3
+    jsr $FFE3
+    jsr $FFE3
+    jsr $FFE3
+    jsr $FFE3   
+    jsr $FFE7
+cli   
 
 SendULA:
     ldx #0
@@ -327,38 +177,11 @@ NextULAreg:
     txa
     cmp #16
     bne NextULAreg    
-    lda #$FF;
-    sta $5800; 
-    rts
-;scr=$3000 when 256x192
-;Set screen height to 25, and screen offset so we're using &3
     
-CRTCConfig:
-    .byte $7F        ;0 - Horizontal total
-;    ifdef ScrWid256 
-;        db $40        ;1 - Horizontal displayed characters;
-;        db $62        ;2 - Horizontal sync position
-;        db $28        ;3 - Horizontal sync width/Vertical sync time
-;    else
-        .byte $50        ;1 - Horizontal displayed characters
-        .byte $62        ;2 - Horizontal sync position
-        .byte $28        ;3 - Horizontal sync width/Vertical sync time
-;    endif
-    .byte $26            ;4 - Vertical total
-    .byte $00            ;5 - Vertical total adjust
-    .byte $20            ;6 - Vertical displayed characters (25)
-    .byte $22            ;7 - Vertical sync position
-    .byte $01            ;8 - Interlace/Display delay/Cursor delay
-    .byte $07            ;9 - Scan lines per character
-    .byte $67    ;10 - Cursor start line and blink type
-    .byte $08            ;11 - Cursor end line
-;    ifdef ScrWid256 
-;        db $0A        ;12 - Screen start address H (Address /8)
-;        db $00        ;13 - Screen start address L 
-;    else
-        .byte $08        ;12 - Screen start address H (Address /8)
-        .byte $30        ;13 - Screen start address L ($4130/8=$0830)
-;    endif
+    lda #4
+    ldx #1
+    jsr OSBYTE 
+    rts
     
 ULAConfig:    
 Palette0:    ;Colour&07 &17 &27 &37 &47 &57 &67 &77
@@ -386,7 +209,44 @@ Palette3:
 ;0  (7)     white
 .ENDPROC
 
+.PROC clock_irq
+    pha
+    txa
+    pha
+    tya
+    pha
+    lda TEMP
+    pha
+    lda PTR
+    pha
+    lda PTR+1
+    pha
+    jmp clock
+.ENDPROC 
+
+.PROC restore_irq
+    pla
+    sta PTR+1
+    pla
+    sta PTR
+    pla
+    sta TEMP
+    pla
+    tay
+    pla
+    tax
+    pla
+    rts
+.ENDPROC
 .PROC setup_timer
+OSBYTE = $FFF4
+    lda #<clock_irq
+    sta $220
+    lda #>clock_irq
+    sta $221
+    lda #14
+    ldx #4
+    jsr OSBYTE
     rts
 .ENDPROC
 .PROC won_screen
@@ -395,36 +255,111 @@ Palette3:
     jsr stop_clock
     jsr reveal_mines
     jsr print_board
+    jsr conclude_music
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-@waitforkey:
-    GETIN
-    cmp #$0D
-    beq :+
-    jmp @waitforkey
-:   jmp main_menu 
+    lda #($E0 - (5*8))
+    sta PTR
+    lda #$77
+    sta PTR+1
+    draw_string 8, str, #$F0
+    jmp press_return
+str: .byte 25, 15, 21, 28, 23, 9, 14, 27
 .ENDPROC
 .PROC lost_screen
     lda #0
     sta CURSOR_ENABLED
     jsr stop_clock
     jsr reveal_mines
+    jsr conclude_music
     jsr print_board
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-@waitforkey:
-    GETIN
-    cmp #$0D
-    beq :+
-    jmp @waitforkey
-:   jmp main_menu 
+    lda #($E0 - (5*8))
+    sta PTR
+    lda #$77
+    sta PTR+1
+    draw_string 8, str, #$0F
+    jmp press_return
+str: .byte 25, 15, 21, 28, 12, 15, 19, 5
 .endproc
 .proc setup_sound
+;ENVELOPE 1,1,1,-1,0,1,1,200,126,-2,-1,-20,126,60
+ldx #<envelope_data
+ldy #>envelope_data
+lda #8
+jsr $FFF1 ; OSWORD
+ldx #<envelope_data2
+ldy #>envelope_data2
+lda #8
+jsr $FFF1 ; OSWORD
 rts
+envelope_data:
+.byte 1,1,1,$FF,0,1,1,200,126,$FE,$FF,($FF-19),126,60
+envelope_data2:
+.byte 2,1,0,0,0,0,0,0,50,0,0,($FF-49),126,126
 .endproc
 .proc dig_sound
+ldx #<sound_data
+ldy #>sound_data
+lda #7
+jsr $FFF1 ; OSWORD
+rts
+sound_data:
+  .word $0000, $FFF1, 101, $6
+rts
+.endproc
+.proc bass_note
+tya 
+pha
+txa
+asl
+asl
+asl
+clc
+adc #<sound_data
+tax
+ldy #>sound_data
+lda #7
+jsr $FFF1 ; OSWORD
+pla
+tay
+rts
+sound_data:
+  .word $0001, $0002, 5, $6
+  .word $0001, $0002, 13, $6
+  .word $0001, $0002, 17, $6
+.endproc
+.proc treble_note  
+tya 
+pha
+txa
+asl
+asl
+asl
+clc
+adc #<sound_data
+tax
+ldy #>sound_data
+lda #7
+jsr $FFF1 ; OSWORD
+pla
+tay
+rts
+sound_data:
+  .word $0002, $0001, 101, $0003
+  .word $0002, $0001, 109, $0003
+  .word $0002, $0001, 113, 3
+  .word $0002, $0001, 125, 3
+  .word $0002, $0001, 129, 3
+  .word $0002, $0001, 137, 3
+  .byte $13, $6F ; D
+  .byte $14, $96 ; Eflat
+  .byte $18, $7C ; fsharp
+  .byte $19, $F0 ; G
+  .byte $1D, $1E ; A
   rts
 .endproc
 .proc clear_cursor
@@ -482,14 +417,113 @@ rts
 @end:   rts
 .endproc
 .proc draw_halfwidth_backdrop
-   rts
-rts
-.endproc
-.proc hide_byline
+    lda #$98
+    sta PTR
+    lda #$58
+    sta PTR+1
+    ldy #0
+    ldx #0
+    lda #(13*8)
+    sta TEMP   
+    lda #$0F
+    sta TEMP2
+@rowloop:   
+    cpx #24
+    beq @end
+    ldy #0
+    @colloop:
+        cpy #20
+        beq @endcolloop 
+        jsr draw_symbol2
+        iny
+        lda PTR
+        clc
+        adc #8
+        bcc :+
+        inc PTR+1
+:       sta PTR
+        jmp @colloop
+    @endcolloop:
+    inx
+    lda PTR
+    clc
+    adc #(20*8)
+    bcc :+
+    inc PTR+1
+:   sta PTR
+    jmp @rowloop
+@end:
     rts
+.endproc
+
+.proc press_return
+    lda #$E8
+    sta PTR
+    lda #$78
+    sta PTR+1
+    draw_string 12, str, #$FF
+@waitforkey:
+    GETIN
+    cmp #$0D
+    beq :+
+    jmp @waitforkey
+:   jmp main_menu 
+str: .byte 16, 18, 5, 19, 19,0, 18, 5, 20, 21, 18, 14 
+.endproc 
+.proc hide_byline
+    lda #$FF
+    sta TEMP2
+    lda #$40
+    sta PTR
+    lda #$77
+    sta PTR+1
+    lda #(28*8) ;(256-8)
+    sta TEMP
+    ldx #0
+:   cpx #80
+    beq :++
+    jsr draw_symbol2
+    lda PTR
+    clc
+    adc #8
+    bcc :+
+    inc PTR+1
+:   sta PTR
+    inx
+    jmp :--
+: 
+    lda #$00
+    sta PTR
+    lda #$7B
+    sta PTR+1
+    draw_string 40, string_four, #$FF
+    rts
+string_four: .byte 18, 5, 20, 21, 18, 14, 13, 6, 12, 1, 7,28,28,28
+.byte 19, 16, 1, 3, 5, 13, 4, 9, 7, 28,28,28,28
+.byte 1, 18, 18, 15, 23, 19,13, 3, 21, 18, 19, 15, 18,28
 .endproc
 .proc print_static_hud
-    rts
+    lda #$FF
+    sta TEMP2
+    lda #$C0
+    sta PTR
+    lda #$74
+    sta PTR+1
+    lda #0 ;(256-8)
+    sta TEMP
+    ldx #0
+:   cpx #40
+    beq :++
+    jsr draw_symbol2
+    lda PTR
+    clc
+    adc #8
+    bcc :+
+    inc PTR+1
+:   sta PTR
+    inx
+    jmp :--
+:   rts
 .endproc
 .proc print_board
     lda #0
@@ -554,8 +588,18 @@ rts
 @continue:
         inx
         iny
-        cpy #20
-        bne :+
+        cpy width
+        bne :+++
+            lda PTR
+:           cpy #20
+            beq :+
+            iny
+            clc
+            adc #(8*2)
+            bcc :-
+            inc PTR+1
+            jmp :-
+:           sta PTR 
             ldy #0
             inc PTR+1
             lda PTR
@@ -570,7 +614,26 @@ rts
 :   rts
 .endproc
 .proc print_board_size
+    lda #$F0
+    sta TEMP2
+    lda width
+    cmp #20
+    bne @hw
+        lda #$0F
+        sta TEMP2
+@hw: 
+    lda #$E8
+    sta PTR
+    lda #$78
+    sta PTR+1
+    draw_string 8, str, TEMP2
+    lda TEMP2
+    eor #$FF
+    sta TEMP2
+    draw_string 4, str2, TEMP2
     rts 
+str: .byte 8, 1, 12, 6,28,28,28,28
+str2: .byte 6, 21, 12, 12
 .endproc
 .PROC print_verticals
     lda #$40
@@ -597,8 +660,18 @@ rts
 @continue:
         inx
         iny
-        cpy #20
-        bne :+
+        cpy width
+        bne :+++
+            lda PTR
+:           cpy #20
+            beq :+
+            iny
+            clc
+            adc #(8*2)
+            bcc :-
+            inc PTR+1
+            jmp :-
+:           sta PTR 
             ldy #0
             inc PTR+1
             lda PTR
@@ -607,7 +680,7 @@ rts
             sta PTR
             bcc :+
             inc PTR+1
-:       cpx size
+:       cpx size_m1
         beq :+
         jmp @loop
 :   rts
@@ -640,13 +713,24 @@ rts
 @continue:
         inx
         iny
-        cpy #20
-        bne :+
+        cpy width_m1
+        bne :+++
+            lda PTR
+:           cpy #19
+            beq :+
+            iny
+            clc
+            adc #(8*2)
+            bcc :-
+            inc PTR+1
+            jmp :-
+:           sta PTR 
+            inx
             ldy #0
             inc PTR+1
             lda PTR
             clc
-            adc #($40)
+            adc #($50)
             sta PTR
             bcc :+
             inc PTR+1
@@ -683,17 +767,28 @@ rts
 @continue:
         inx
         iny
-        cpy #20
-        bne :+
+        cpy width_m1
+        bne :+++
+            lda PTR
+:           cpy #19
+            beq :+
+            iny
+            clc
+            adc #(8*2)
+            bcc :-
+            inc PTR+1
+            jmp :-
+:           sta PTR 
+            inx
             ldy #0
             inc PTR+1
             lda PTR
             clc
-            adc #($40)
+            adc #($50)
             sta PTR
             bcc :+
             inc PTR+1
-:       cpx size
+:       cpx size_m1
         beq :+
         jmp @loop
 :   rts
@@ -702,50 +797,67 @@ rts
 .byte 0,48,56,32,64,16,112,72,80,120,24,88,40,104,96,8
 .ENDPROC
 .PROC print_menu
-    jsr print_title
     jsr print_static_hud
     jsr print_hud
     jsr print_board_size
+    lda #($18+8)
+    sta PTR
+    lda #$5C
+    sta PTR+1
+    draw_string 95, string_two, #$FF
+    lda #104
+    sta PTR
+    lda #$5D
+    sta PTR+1
+    draw_string_shadow 13, string_one
+    lda #($E0 - (6*8))
+    sta PTR
+    lda #$77
+    sta PTR+1
+    draw_string 10, string_three, #$FF
+    lda #$00
+    sta PTR
+    lda #$7B
+    sta PTR+1
+    draw_string 40, string_four, #$FF
     rts
+string_one: .byte 1, 18, 3, 8, 1, 5, 15, 12, 15, 7, 9, 19, 20     
+string_two:                       .byte 10,31,31,31,31,31,31,31,31,31,31,31,31,31,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+            .byte 0,0,0,0,0,0,0,0,0,0,0,29,28,28,28,28,28,28,28,28,28,28,28,28,28,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+            .byte 0,0,0,0,0,0,0,0,0,0,0,22,24,24,24,24,24,24,24,24,24,24,24,24,24,17
+string_three: .byte 2, 15, 1, 18, 4,28, 19, 9, 26, 5 
+string_four: .byte 18, 5, 20, 21, 18, 14,13,19, 20, 1 ,18, 20,28,28,28,28,28,28,28,28,28,28,28,1, 18, 18, 15, 23, 19, 13, 4, 9, 6, 6, 9, 3, 21, 12, 20, 25,0
 .ENDPROC
-.PROC print_title
-rts    
-.endproc
 .PROC print_hud
+    lda #$F8
+    sta PTR
+    lda #$75
+    sta PTR+1
+    ldy flags
+    ldx #23
+@loop: 
+    cpx #0 
+    beq @done
+    lda #(96+64+24+24+32+8)
+    cpy #0
+    beq :+
+      dey
+      lda #(96+64+24+24+32)
+      cpy #0    
+      beq :+
+        dey
+        lda #(96+64+24+24+16+8)
+:   sta TEMP
+    dec PTR+1
+    lda PTR
+    sec
+    sbc #$40
+    bcs :+
+    dec PTR+1
+:   sta PTR
+    dex
+    jsr draw_symbol
+    jmp @loop
+@done:
     rts
 .ENDPROC
-.proc printy 
-    
-PrintChar = $FFE3    ;OSASCI - Print Ascii Character to scrn
-NewLine   = $FFE7    ;OSNEWL - New Line
-
-    ;Load in the address of the Message into the zero page
-    lda #>HelloWorld
-    sta $21                ;H Byte
-    lda #<HelloWorld
-    sta $20                ;L Byte
-    
-    jsr PrintStr        ;Show to the screen
-    
-    jsr NewLine            ;Start a new line
-
-    rts                    ;Return to basic
-
-
-PrintStr:
-    ldy #0                ;Set Y to zero
-PrintStr_again:
-    lda ($20),y            ;Load a character from addr in $20+Y 
-    
-    cmp #255            ;If we got 255, we're done
-    beq PrintStr_Done
-    
-    jsr PrintChar        ;Print Character
-    iny                    ;Inc Y and repeat
-    jmp PrintStr_again
-PrintStr_Done:
-    rts    
-
-HelloWorld:                ;255 terminated string
-    .byte "Hello World",255
-.endproc

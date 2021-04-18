@@ -5,11 +5,11 @@ main.xex: main.s MyAtari.cfg my_atari.inc minesweeper.inc
 main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc
 	cl65 -t c64 -C MyC64.cfg -u __EXEHDR__ main.s -o main.prg
 
-main.bbc: main.s MyBBC.cfg my_bbc.inc minesweeper.inc
+main.bbc: main.s MyBBC.cfg my_bbc.inc minesweeper.inc bbc_symbols.inc bbc_symbols2.inc
 	cl65 -t bbc -C MyBBC.cfg --no-target-lib main.s -o main.bbc
 
 main.inf: main.bbc
-	tools/generate_inf.sh main.bbc MAIN 003000 003000 0 1 main.inf
+	tools/generate_inf.sh main.bbc MAIN 001900 001900 0 1 main.inf
 
 main.ssd: main.bbc main.inf tools/!boot tools/!boot.inf
 	rm -f main.ssd

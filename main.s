@@ -14,7 +14,7 @@ sta SEED2
 nop
 .ENDMACRO
 .MACRO ack_irq
-rts
+jmp restore_irq
 .ENDMACRO
 .MACRO CLEAR_CURSOR
 jsr clear_cursor
@@ -202,11 +202,11 @@ Main:
 
 .PROC menu_loop
 .if .defined(__BBC__)
-KEY_FW = $15
-KEY_HW = $08
-KEY_HARDER = $0B
-KEY_EASIER = $0A
 KEY_START = $0D
+KEY_FW = 137
+KEY_HW = 136
+KEY_HARDER = 139
+KEY_EASIER = 138
 .elseif .defined(__APPLE2__)
 KEY_FW = $95
 KEY_HW = $88
@@ -318,7 +318,6 @@ full_width:
     hide_cursor
     
     jsr initialise_board
-    jsr printy
     jsr reveal_zeros
     jsr print_board    
     jsr print_intersections    
@@ -338,7 +337,7 @@ full_width:
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-    .if !(.defined(__APPLE2__) || .defined(__BBC__))
+    .if !(.defined(__APPLE2__))
     jsr stop_music
     .endif
     lda width
@@ -346,7 +345,7 @@ full_width:
     bne :+
     jsr draw_halfwidth_backdrop
 :   jsr setup_sound
-    .if !(.defined(__APPLE2__) || .defined(__BBC__))
+    .if !(.defined(__APPLE2__))
     jsr start_music
     .endif
     jsr position_cursor_sprite
@@ -357,23 +356,31 @@ full_width:
 
 
 .PROC update_display
+.if (.defined(__BBC__)  || .defined(__APPLE2__))
+    lda #0
+    sta CURSOR_ENABLED
+.endif     
     jsr print_board
     jsr print_horizontals
     jsr print_verticals
     jsr print_intersections
+.if (.defined(__BBC__)  || .defined(__APPLE2__))
+    lda #$FF
+    sta CURSOR_ENABLED
+.endif 
     rts
 .ENDPROC 
 
 .PROC main_loop
 .if .defined(__BBC__)
 
-KEY_RIGHT = $05
+KEY_RIGHT = 137
 KEY_RIGHT2 = 68 ; d
-KEY_LEFT = $08
+KEY_LEFT = 136
 KEY_LEFT2 = 65 ; a
-KEY_UP = $0B
+KEY_UP = 139
 KEY_UP2 = 87 ; w
-KEY_DOWN = $0A
+KEY_DOWN = 138
 KEY_DOWN2 = 83 ; s
 KEY_FLAG = $0D
 KEY_DIG = $20
@@ -485,9 +492,9 @@ KEY_DIG = $20
     jmp main_loop    
 .ENDPROC
 
-.PROC clock
+.PROC clock    
     inc musiccounter
-.if !(.defined(__APPLE2__) || .defined(__BBC__))
+.if !(.defined(__APPLE2__))
     lda musiccounter    
     cmp #8
     bne :+
@@ -495,7 +502,7 @@ KEY_DIG = $20
         sta musiccounter
         jsr music
 :   
-.ifdef __ATARI__
+.if .defined(__ATARI__) 
     jsr fade_sfx
 .endif
     lda state
@@ -549,7 +556,7 @@ seconds10: .byte 0
 minutes10: .byte 0
 .ENDPROC
 
-.if !(.defined(__APPLE2__) || .defined(__BBC__))
+.if !(.defined(__APPLE2__))
 MUTED      = %00000001
 NOT_MUTED  = %10000000
 PLAYING    = %00000010
@@ -813,12 +820,70 @@ state: .byte %00000000
 .ENDPROC
 .endif 
 
-
 .PROC display_clock
-.if .defined(__BBC__)
-@ScreenPos = $06D0
-@Additive = 176
-.elseif .defined(__APPLE2__)
+.ifdef __BBC__
+    lda #$00
+    sta PTR
+    lda #$76
+    sta PTR+1
+    lda clock::state
+    cmp #0
+    beq :+
+    lda clock::minutes10
+    asl
+    asl 
+    asl
+    clc
+    adc #(16*8)
+    sta TEMP
+    jsr draw_symbol
+    lda #8
+    sta PTR
+    lda clock::minutes
+    asl
+    asl 
+    asl
+    clc
+    adc #(16*8)
+    sta TEMP
+    jsr draw_symbol
+    lda #(28*8)
+    sta TEMP
+    lda #17
+    sta PTR
+    jsr draw_symbol
+    lda #24
+    sta PTR
+    lda clock::seconds10
+    asl
+    asl
+    asl
+    clc
+    adc #(16*8)
+    sta TEMP
+    jsr draw_symbol
+    lda #32
+    sta PTR
+    lda clock::seconds
+    asl
+    asl
+    asl
+    clc
+    adc #(16*8)
+    sta TEMP
+    jsr draw_symbol
+    lda clock::subcounter
+    lsr
+    bcs :+
+    lsr 
+    bcs :+
+    lsr 
+    bcs :+
+    jsr flash_cursor
+:   ack_irq
+.else
+
+.if .defined(__APPLE2__)
 @ScreenPos = $06D0
 @Additive = 176
 .elseif .defined(__ATARI__)
@@ -848,6 +913,7 @@ state: .byte %00000000
     adc #@Additive
     sta @ScreenPos+4
 :   ack_irq
+.endif
 .ENDPROC 
 .DATA
 END:
