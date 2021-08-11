@@ -1,7 +1,61 @@
 ; main assembler part
 ;
 ; -> (c) 2012 C.Kr�ger <-
-.if .defined(__BBC__)
+
+.if .defined(__RC6502__)
+LEDS = $A000
+KEYS = $A000
+KEY_TICKS = $03
+CURSOR_TICKS = $21
+CURSOR_TICKS2 = $22
+LAST_KEY = $02
+KEY_SWITCH = $01
+RNDL = $04
+RNDH = $05
+VDU_WINDOW = $8C00
+VDU_MODE = $8800
+VDU_BASE = $8000
+STRING_PTR = $0A
+LEDS_PTR = $0C
+LEDS_TICKS = $31
+LEDS_TICKS2 = $32
+.CODE
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
+.MACRO start_irq
+nop
+.ENDMACRO
+.MACRO ack_irq
+rts
+.ENDMACRO
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
+.MACRO GETIN
+jsr rc6502_keyin
+.ENDMACRO 
+PTR2 = $FB
+PTR  = $FD
+TEMP  = $49
+TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+CHARSET = $4D
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+
+
+
+.elseif .defined(__BBC__)
 .MACRO INITIALISE_RANDOM
 lda $0240
 sta SEED0
@@ -163,6 +217,7 @@ jsr $FFE4 ; GETIN kernal function
 .else
 .CODE
 .endif
+
 Main:
   ;  lda #2
   ;  sta 710
@@ -176,7 +231,10 @@ Main:
 .CODE
 .endif
 .include "minesweeper.inc"
-.if .defined(__BBC__)
+.if .defined(__RC6502__)
+.include "my_rc6502.inc"
+.include "apple2_rand.inc"
+.elseif .defined(__BBC__)
 .include "my_bbc.inc"
 .include "apple2_rand.inc"
 .elseif .defined(__APPLE2__)
@@ -195,7 +253,7 @@ Main:
 .word    RUNAD            ; defined in atari.h
 .word    RUNAD+1
 .word    Main
-.elseif __C64__
+.elseif .defined(__C64__)
 .include "my_c64.inc"
 .endif
 .CODE
@@ -300,7 +358,7 @@ full_width:
     jmp menu_loop
 .ENDPROC
 .PROC main_menu
-    .if !(.defined(__APPLE2__) || .defined(__BBC__))
+    .if !(.defined(__APPLE2__) || .defined(__RC6502__) || .defined(__BBC__))
     jsr stop_music
     .endif
     lda #26
@@ -337,7 +395,7 @@ full_width:
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-    .if !(.defined(__APPLE2__))
+    .if !(.defined(__APPLE2__) || .defined(__RC6502__))
     jsr stop_music
     .endif
     lda width
@@ -386,7 +444,6 @@ KEY_FLAG = $0D
 KEY_DIG = $20
 
 .elseif .defined(__APPLE2__)
-
 KEY_FW = $95
 KEY_HW = $88
 KEY_HARDER = $8B
@@ -493,8 +550,11 @@ KEY_DIG = $20
 .ENDPROC
 
 .PROC clock    
+    .if .defined(__RC6502__)
+    jsr leds_tick
+    .endif
     inc musiccounter
-.if !(.defined(__APPLE2__))
+.if !(.defined(__APPLE2__) || .defined(__RC6502__))
     lda musiccounter    
     cmp #8
     bne :+
@@ -513,8 +573,13 @@ KEY_DIG = $20
 @subcounter_cap = 56
 .else 
 @subcounter_cap = 255
+.if .defined(__RC6502__)
+@musiccounter_cap = 50
+.else 
+@musiccounter_cap = 5
+.endif 
     lda musiccounter
-    cmp #5
+    cmp #@musiccounter_cap
     bne :+ 
         lda #0
         sta musiccounter
@@ -529,24 +594,27 @@ KEY_DIG = $20
     inc seconds
     lda seconds
     cmp #10
-    bne @done
+    bne @done_dis
         lda #0
         sta seconds
         inc seconds10
         lda seconds10
         cmp #6
-        bne @done
+        bne @done_dis
             lda #0 
             sta seconds10
             inc minutes
             lda minutes
             cmp #10
-            bne @done
+            bne @done_dis
                 lda #0
                 sta minutes
                 inc minutes10   
-@done: 
+                
+@done_dis: 
     jmp display_clock
+@done: 
+    ack_irq
 musiccounter: .byte 0
 state: .byte 0
 subcounter: .byte 0
@@ -556,7 +624,7 @@ seconds10: .byte 0
 minutes10: .byte 0
 .ENDPROC
 
-.if !(.defined(__APPLE2__))
+.if !(.defined(__APPLE2__) || .defined(__RC6502__))
 MUTED      = %00000001
 NOT_MUTED  = %10000000
 PLAYING    = %00000010
@@ -713,111 +781,10 @@ state: .byte %00000000
     rts
 .ENDPROC
 
-.if !(.defined(__APPLE2__) || .defined(__BBC__))
-.PROC print_horizontals
-    ; PTR stores the current row in video ram
-    ; Y stores the position in current row
-    ; X stores the current index into the board
-    lda #<(BoardScreen+1)
-    sta PTR
-    lda #>(BoardScreen+1)
-    sta PTR+1
-    ldy #0
-    ldx #0
-@loop:  tya 
-        pha 
-        lda intersections,X
-        tay 
-        lda @char_table,y
-        sta TEMP
-        pla 
-        tay         
-        tya 
-        pha
-        asl 
-        tay        
-        lda TEMP
-        sta (PTR),Y
-        pla
-        tay
-        iny
-        cpy width_m1  ; minus one because we don't print the right edge
-        bne :+
-            inx
-            ldy #0
-            lda PTR
-            clc
-            adc #80
-            sta PTR
-            bcc :+
-                inc PTR+1
-:       inx
-        cpx size
-        bcs :+
-        jmp @loop
-:   rts
-@char_table:
-.ifdef __ATARI__
-    .byte 12+64, 11+64, 13+64,0+64,  12+64, 11+64, 13+64,0+64,12+64, 11+64,13+64,0+64,12+64,11+64,13+64,0+64
-.elseif .defined(__C64__)
-    .byte ($20 | BLOCK_COL_BG), ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-    .byte ($20 | BLOCK_COL_BG), ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-    .byte ($20 | BLOCK_COL_BG), ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-    .byte ($20 | BLOCK_COL_BG), ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-.endif
-.ENDPROC
-
-.PROC print_verticals
-    ; PTR stores the current row in video ram
-    ; Y stores the position in current row
-    ; X stores the current index into the board
-    lda #<(BoardScreen+40)
-    sta PTR
-    lda #>(BoardScreen+40)
-    sta PTR+1
-    ldy #0
-    ldx #0
-@loop:  tya 
-        pha 
-        lda intersections,x
-        tay 
-        lda @char_table,y
-        sta TEMP
-        pla 
-        tay         
-        tya 
-        pha
-        asl 
-        tay        
-        lda TEMP
-        sta (PTR),Y
-        pla
-        tay
-        iny    
-        cpy width 
-        bne :+ 
-            ldy #0
-            lda PTR
-            clc
-            adc #80
-            sta PTR
-            bcc :+
-                inc PTR+1
-:       inx
-        cpx size_m1
-        bcs :+
-        jmp @loop
-:   rts
-@char_table:
-.ifdef __ATARI__
-.byte 12+64, 11+64, 12+64, 11+64, 13+64, 0+64, 13+64, 0+64, 12+64, 11+64,12+64, 11+64,13+64, 0+64, 13+64, 0+64
-.elseif .defined(__C64__)
-.byte ($20 | BLOCK_COL_BG),   ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_COL_BG),    ($20 | BLOCK_HI_COL_BG)
-.byte ($20 | BLOCK_LO_COL_BG),($20 | SPACE_COL_BG),    ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-.byte ($20 | BLOCK_COL_BG),   ($20 | BLOCK_HI_COL_BG), ($20 | BLOCK_COL_BG),    ($20 | BLOCK_HI_COL_BG)
-.byte ($20 | BLOCK_LO_COL_BG),($20 | SPACE_COL_BG),    ($20 | BLOCK_LO_COL_BG), ($20 | SPACE_COL_BG)
-.endif
-.ENDPROC
+.if (.defined(__APPLE2__) || .defined(__RC6502__))
+.include "apple2_rc6502_visuals.inc"
+.elseif !(.defined(__BBC__))
+.include "atari_c64_visuals.inc"
 .endif 
 
 .PROC display_clock
@@ -882,8 +849,10 @@ state: .byte %00000000
     jsr flash_cursor
 :   ack_irq
 .else
-
-.if .defined(__APPLE2__)
+.if .defined(__RC6502__)
+@ScreenPos = ClockData
+@Additive = $30
+.elseif .defined(__APPLE2__)
 @ScreenPos = $06D0
 @Additive = 176
 .elseif .defined(__ATARI__)
@@ -912,7 +881,25 @@ state: .byte %00000000
     clc
     adc #@Additive
     sta @ScreenPos+4
-:   ack_irq
+:  
+.if .defined(__RC6502__)
+ldx #23
+ldy #0
+lda #$FF
+sta TEMP2
+lda #<ClockData
+sta STRING_PTR
+lda #>ClockData
+sta STRING_PTR+1
+lda clock::state
+cmp #0
+beq :+
+jsr draw_string
+: ack_irq
+ClockData: .asciiz "00:00"
+.else
+ack_irq
+.endif
 .endif
 .ENDPROC 
 .DATA
