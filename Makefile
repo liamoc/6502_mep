@@ -27,7 +27,10 @@ clean:
 #   Apple II
 
 apple2: main.dsk
-	open ~/Applications/Virtual\ \]\[.app
+	@if linapple --help >/dev/null 2>&1; \
+	    then linapple --d1 main.dsk; \
+	    else open ~/Applications/Virtual\ \]\[.app; \
+	    fi
 
 main.dsk: main.as tools/a2in tools/blank.dsk
 	cp ./tools/blank.dsk main.dsk && ./tools/a2in -r b main.dsk MAIN main.as
