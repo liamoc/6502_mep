@@ -1,5 +1,42 @@
 MAX_WIDTH=20
 MAX_HEIGHT=10
+
+PTR2 = $FB
+PTR  = $FD
+TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+CHARSET = $4D
+
+KEY_RIGHT = $95
+KEY_RIGHT2 = 58 ; d
+KEY_LEFT = $88
+KEY_LEFT2 = 63 ; a
+KEY_UP = $8B
+KEY_UP2 = 46 ; w
+KEY_DOWN = $8A
+KEY_DOWN2 = 62 ; s
+KEY_FLAG = $8D
+KEY_DIG = $A0
+KEY_FW = $95
+KEY_HW = $88
+KEY_HARDER = $8B
+KEY_EASIER = $8A
+KEY_START = $8D
+KEY_CHARSWITCH = $C3
+
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
+.MACRO GETIN
+jsr apple_keyin
+.ENDMACRO 
+.MACRO start_irq
+nop
+.ENDMACRO
+.MACRO ack_irq
+rts
+.ENDMACRO
 .macro AS text
     .repeat .strlen(text), I
         .byte   .strat(text, I) | $80

@@ -1,9 +1,39 @@
 MAX_WIDTH=16
 MAX_HEIGHT=11
+
+PTR2 = $FB
+PTR  = $FD
+TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+CHARSET = $4D
+KEY_TICKS = $03
+CURSOR_TICKS = $21
+CURSOR_TICKS2 = $22
+LAST_KEY = $02
+KEY_SWITCH = $01
+RNDL = $04
+RNDH = $05
+STRING_PTR = $0A
+LEDS_PTR = $0C
+LEDS_TICKS = $31
+LEDS_TICKS2 = $32
 .macro hide_cursor
 .endmacro
 .macro show_cursor
 .endmacro 
+.MACRO start_irq
+nop
+.ENDMACRO
+.MACRO ack_irq
+rts
+.ENDMACRO
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
+.MACRO GETIN
+jsr rc6502_keyin
+.ENDMACRO 
 
 
 .PROC draw_symbol_text

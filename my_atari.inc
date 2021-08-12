@@ -1,6 +1,58 @@
 MAX_HEIGHT=12
 MAX_WIDTH=20
 
+.MACRO start_irq
+    pha
+    txa
+    pha
+    tya
+    pha
+.ENDMACRO
+.MACRO ack_irq
+    pla
+    tay
+    pla
+    tax
+    pla
+    rti
+.ENDMACRO
+.MACRO CLEAR_CURSOR
+.ENDMACRO
+.macro GETIN
+:   lda CONSOL
+    cmp #%00000110
+    beq @start
+    lda KEYDEL
+    cmp #3
+    bne :-
+    lda CH
+    pha
+    lda #$FF
+    sta CH 
+    pla
+    jmp @done
+@start: lda #$FD
+@done:  nop        
+.endmacro
+
+PTR  = $FD
+
+KEY_UP3 = 142
+KEY_DOWN3 = 143
+KEY_RIGHT3 = 135
+KEY_RIGHT2 = 58 ; d
+KEY_LEFT3 = 134
+KEY_LEFT2 = 63 ; a
+KEY_UP2 = 46 ; w
+KEY_DOWN2 = 62 ; s
+KEY_FLAG = 12
+KEY_DIG = $21
+
+KEY_FW = 135
+KEY_HW = 134
+KEY_HARDER = 142
+KEY_EASIER = 143
+KEY_START = $FD
 .MACRO show_cursor 
     nop
 .ENDMACRO

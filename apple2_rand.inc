@@ -4,6 +4,22 @@ SEED2 = $A2
 SEED3 = $A3
 TMP = $A4
 MOD = TMP+4
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
+
+.macro SOFTWARE_RANDOM_CODE
+
 .proc RAND
          LDA SEED0 ; TMP = SEED * 2
          ASL
@@ -142,3 +158,4 @@ R8B:     ROR        ; shift product right
          BNE R8A
          RTS
 .ENDPROC
+.ENDMACRO

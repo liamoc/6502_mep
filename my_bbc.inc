@@ -1,5 +1,41 @@
 MAX_WIDTH=20
 MAX_HEIGHT=12
+RNDL = $0240
+RNDH = $0240
+PTR2 = $FB
+PTR  = $FD
+TEMP2 = $4A
+CURSOR_ON = $4B
+CURSOR_ENABLED = $4C
+
+KEY_RIGHT = 137
+KEY_RIGHT2 = 68 ; d
+KEY_LEFT = 136
+KEY_LEFT2 = 65 ; a
+KEY_UP = 139
+KEY_UP2 = 87 ; w
+KEY_DOWN = 138
+KEY_DOWN2 = 83 ; s
+KEY_FLAG = $0D
+KEY_DIG = $20
+
+KEY_START = $0D
+KEY_FW = 137
+KEY_HW = 136
+KEY_HARDER = 139
+KEY_EASIER = 138
+.MACRO start_irq
+nop
+.ENDMACRO
+.MACRO ack_irq
+jmp restore_irq
+.ENDMACRO
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
+.MACRO GETIN
+JSR $FFE0
+.ENDMACRO 
 .macro hide_cursor
 .endmacro
 .macro show_cursor

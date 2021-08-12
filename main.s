@@ -1,129 +1,29 @@
-; main assembler part
-;
-; -> (c) 2012 C.Kr�ger <-
-
 .if .defined(__RC6502__)
+__DISABLE_MUSIC__ = 1
+__SPIN_CLOCK__ = 1
+__SOFTWARE_CURSOR__ = 1
+.include "apple2_rand.inc"
 LEDS = $A000
 KEYS = $A000
-KEY_TICKS = $03
-CURSOR_TICKS = $21
-CURSOR_TICKS2 = $22
-LAST_KEY = $02
-KEY_SWITCH = $01
-RNDL = $04
-RNDH = $05
 VDU_WINDOW = $8C00
 VDU_MODE = $8800
 VDU_BASE = $8000
-STRING_PTR = $0A
-LEDS_PTR = $0C
-LEDS_TICKS = $31
-LEDS_TICKS2 = $32
+TEMP  = $49
 .CODE
-.MACRO INITIALISE_RANDOM
-lda RNDL
-sta SEED0
-sta SEED3
-lda RNDH
-sta SEED1
-sta SEED2
-.ENDMACRO
-.MACRO start_irq
-nop
-.ENDMACRO
-.MACRO ack_irq
-rts
-.ENDMACRO
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
-.MACRO GETIN
-jsr rc6502_keyin
-.ENDMACRO 
-PTR2 = $FB
-PTR  = $FD
-TEMP  = $49
-TEMP2 = $4A
-CURSOR_ON = $4B
-CURSOR_ENABLED = $4C
-CHARSET = $4D
-.macro LDX_RANDOM
-lda #$FF
-jsr RANDOM8
-tax
-.endmacro
-
-
-
 .elseif .defined(__BBC__)
-.MACRO INITIALISE_RANDOM
-lda $0240
-sta SEED0
-sta SEED3
-lda $0240
-sta SEED1
-sta SEED2
-.ENDMACRO
-.MACRO start_irq
-nop
-.ENDMACRO
-.MACRO ack_irq
-jmp restore_irq
-.ENDMACRO
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
-.MACRO GETIN
-JSR $FFE0
-.ENDMACRO 
-PTR2 = $FB
-PTR  = $FD
+__SOFTWARE_CURSOR__ = 1
+.include "apple2_rand.inc"
 TEMP  = $49
-TEMP2 = $4A
-CURSOR_ON = $4B
-CURSOR_ENABLED = $4C
-.macro LDX_RANDOM
-lda #$FF
-jsr RANDOM8
-tax
-.endmacro
+.code
 .elseif .defined (__APPLE2__)
+__SPIN_CLOCK__ = 1
+__SOFTWARE_CURSOR__ = 1
+__DISABLE_MUSIC__ = 1
+.include "apple2_rand.inc"
 .include "apple2.inc"
-.MACRO INITIALISE_RANDOM
-lda RNDL
-sta SEED0
-sta SEED3
-lda RNDH
-sta SEED1
-sta SEED2
-.ENDMACRO
-.MACRO start_irq
-nop
-.ENDMACRO
-.MACRO ack_irq
-rts
-.ENDMACRO
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
-.MACRO GETIN
-jsr apple_keyin
-.ENDMACRO 
-PTR2 = $FB
-PTR  = $FD
 TEMP  = $49
-TEMP2 = $4A
-CURSOR_ON = $4B
-CURSOR_ENABLED = $4C
-CHARSET = $4D
-.macro LDX_RANDOM
-lda #$FF
-jsr RANDOM8
-tax
-.endmacro
+.segment "LOWCODE"
 .elseif .defined(__ATARI__)
-.MACRO CLEAR_CURSOR
-.ENDMACRO
 .include "atari.inc"
 .MACRO INITIALISE_RANDOM
 nop
@@ -131,50 +31,9 @@ nop
 .macro LDX_RANDOM
 ldx RANDOM
 .endmacro
-PTR  = $FD
-
-.MACRO start_irq
-    pha
-    txa
-    pha
-    tya
-    pha
-.ENDMACRO
-.MACRO ack_irq
-    pla
-    tay
-    pla
-    tax
-    pla
-    rti
-.ENDMACRO
-
-.macro GETIN
-:   lda CONSOL
-    cmp #%00000110
-    beq @start
-    lda KEYDEL
-    cmp #3
-    bne :-
-    lda CH
-    pha
-    lda #$FF
-    sta CH 
-    pla
-    jmp @done
-@start: lda #$FD
-@done:  nop        
-.endmacro
-
+.code
 .elseif .defined(__C64__)
-.MACRO start_irq
-.ENDMACRO
-.MACRO ack_irq
-    jmp $ea31
-.ENDMACRO
 
-.MACRO CLEAR_CURSOR
-.ENDMACRO
 .include "c64.inc"
 .macro INITIALISE_RANDOM
     lda #0
@@ -185,43 +44,15 @@ PTR  = $FD
     lda #$80     ; noise waveform, gate bit off
     sta SID_Ctl3 ; voice 3 control register  
 .endmacro
-
-SPACE_COL    = 0
-BLOCK_COL    = 8
-BLOCK_HI_COL = 10
-BLOCK_LO_COL = 9
-
-SPACE_COL_BG    = 0
-BLOCK_COL_BG    = %01000000
-BLOCK_LO_COL_BG = %10000000
-BLOCK_HI_COL_BG = %11000000
-
-CURSOR_LEFT_MARGIN = 16
-CURSOR_TOP_MARGIN  = 42
 RANDOM = SID_Noise
 .macro LDX_RANDOM
 ldx RANDOM
 .endmacro
-PTR2 = $FB
-PTR  = $FD
 TEMP  = $49
-TEMP2 = $4A
-BoardScreen = $0400
-.macro GETIN
-jsr $FFE4 ; GETIN kernal function
-.endmacro
-.endif
-
-.ifdef __APPLE2__
-.segment "LOWCODE"
-.else
 .CODE
 .endif
 
 Main:
-  ;  lda #2
-  ;  sta 710
-  ;  jmp Main
     jsr init
     jsr setup_timer
     jmp main_menu
@@ -230,19 +61,24 @@ Main:
 .segment "HGR"
 .CODE
 .endif
+
 .include "minesweeper.inc"
-.if .defined(__RC6502__)
+
+.ifdef __RC6502__
 .include "my_rc6502.inc"
-.include "apple2_rand.inc"
+SOFTWARE_RANDOM_CODE
+
 .elseif .defined(__BBC__)
 .include "my_bbc.inc"
-.include "apple2_rand.inc"
+SOFTWARE_RANDOM_CODE
+
 .elseif .defined(__APPLE2__)
 .include "my_apple2.inc"
-.include "apple2_rand.inc"
+SOFTWARE_RANDOM_CODE
 .segment "EXEHDR"
 .word Main ; 2 byte BLAOD address
 .word END - Main ; 2 byte BLOAD size
+
 .elseif .defined(__ATARI__)
 .include "my_atari.inc"
 .segment "EXEHDR"
@@ -253,38 +89,14 @@ Main:
 .word    RUNAD            ; defined in atari.h
 .word    RUNAD+1
 .word    Main
+
 .elseif .defined(__C64__)
 .include "my_c64.inc"
 .endif
+
 .CODE
 
 .PROC menu_loop
-.if .defined(__BBC__)
-KEY_START = $0D
-KEY_FW = 137
-KEY_HW = 136
-KEY_HARDER = 139
-KEY_EASIER = 138
-.elseif .defined(__APPLE2__)
-KEY_FW = $95
-KEY_HW = $88
-KEY_HARDER = $8B
-KEY_EASIER = $8A
-KEY_START = $8D
-KEY_CHARSWITCH = $C3
-.elseif .defined(__ATARI__)
-KEY_FW = 135
-KEY_HW = 134
-KEY_HARDER = 142
-KEY_EASIER = 143
-KEY_START = $FD
-.elseif .defined(__C64__)
-KEY_FW = $1d
-KEY_HW = $9d
-KEY_EASIER = $11
-KEY_HARDER = $91
-KEY_START = 136
-.endif
     GETIN  
     cmp #KEY_FW
     beq full_width
@@ -358,7 +170,7 @@ full_width:
     jmp menu_loop
 .ENDPROC
 .PROC main_menu
-    .if !(.defined(__APPLE2__) || .defined(__RC6502__) || .defined(__BBC__))
+    .ifndef __DISABLE_MUSIC__
     jsr stop_music
     .endif
     lda #26
@@ -395,7 +207,7 @@ full_width:
     jsr print_intersections
     jsr print_horizontals
     jsr print_verticals
-    .if !(.defined(__APPLE2__) || .defined(__RC6502__))
+    .if !(.defined(__DISABLE_MUSIC__))
     jsr stop_music
     .endif
     lda width
@@ -403,7 +215,7 @@ full_width:
     bne :+
     jsr draw_halfwidth_backdrop
 :   jsr setup_sound
-    .if !(.defined(__APPLE2__))
+    .if !(.defined(__DISABLE_MUSIC__))
     jsr start_music
     .endif
     jsr position_cursor_sprite
@@ -414,7 +226,7 @@ full_width:
 
 
 .PROC update_display
-.if (.defined(__BBC__)  || .defined(__APPLE2__))
+.ifdef __SOFTWARE_CURSOR__
     lda #0
     sta CURSOR_ENABLED
 .endif     
@@ -422,7 +234,7 @@ full_width:
     jsr print_horizontals
     jsr print_verticals
     jsr print_intersections
-.if (.defined(__BBC__)  || .defined(__APPLE2__))
+.ifdef __SOFTWARE_CURSOR__
     lda #$FF
     sta CURSOR_ENABLED
 .endif 
@@ -430,76 +242,39 @@ full_width:
 .ENDPROC 
 
 .PROC main_loop
-.if .defined(__BBC__)
-
-KEY_RIGHT = 137
-KEY_RIGHT2 = 68 ; d
-KEY_LEFT = 136
-KEY_LEFT2 = 65 ; a
-KEY_UP = 139
-KEY_UP2 = 87 ; w
-KEY_DOWN = 138
-KEY_DOWN2 = 83 ; s
-KEY_FLAG = $0D
-KEY_DIG = $20
-
-.elseif .defined(__APPLE2__)
-KEY_FW = $95
-KEY_HW = $88
-KEY_HARDER = $8B
-KEY_EASIER = $8A
-KEY_START = $8D
-
-KEY_RIGHT = $95
-KEY_RIGHT2 = 58 ; d
-KEY_LEFT = $88
-KEY_LEFT2 = 63 ; a
-KEY_UP = $8B
-KEY_UP2 = 46 ; w
-KEY_DOWN = $8A
-KEY_DOWN2 = 62 ; s
-KEY_FLAG = $8D
-KEY_DIG = $A0
-.elseif .defined(__ATARI__)
-KEY_RIGHT = 135
-KEY_RIGHT2 = 58 ; d
-KEY_LEFT = 134
-KEY_LEFT2 = 63 ; a
-KEY_UP = 142
-KEY_UP2 = 46 ; w
-KEY_DOWN = 143
-KEY_DOWN2 = 62 ; s
-KEY_FLAG = 12
-KEY_DIG = $21
-.elseif .defined(__C64__)
-KEY_RIGHT = $1d
-KEY_RIGHT2 = $44 ;D
-KEY_LEFT = $9d
-KEY_LEFT2 = $41 ; A
-KEY_UP = $91
-KEY_UP2 = $57 ; W
-KEY_DOWN = $11
-KEY_DOWN2 = $53 ; S
-KEY_FLAG = $0d
-KEY_DIG = $20
-.endif
     GETIN
     cmp #KEY_RIGHT
     beq @right
     cmp #KEY_RIGHT2
     beq @right
+    .ifdef KEY_RIGHT3
+    cmp #KEY_RIGHT3
+    beq @right
+    .endif
     cmp #KEY_DOWN
     beq @down
     cmp #KEY_DOWN2
     beq @down
+    .ifdef KEY_DOWN3
+    cmp #KEY_DOWN3
+    beq @down
+    .endif
     cmp #KEY_LEFT
     beq @left
     cmp #KEY_LEFT2
     beq @left
+    .ifdef KEY_LEFT3
+    cmp #KEY_LEFT3
+    beq @left
+    .endif
     cmp #KEY_UP
     beq @up
     cmp #KEY_UP2
     beq @up
+    .ifdef KEY_UP3
+    cmp #KEY_UP3
+    beq @up
+    .endif
     cmp #KEY_DIG
     beq @dig
     cmp #KEY_FLAG
@@ -550,17 +325,19 @@ KEY_DIG = $20
 .ENDPROC
 
 .PROC clock    
-    .if .defined(__RC6502__)
+.if .defined(__RC6502__)
     jsr leds_tick
-    .endif
+.endif
     inc musiccounter
-.if !(.defined(__APPLE2__) || .defined(__RC6502__))
+.ifndef __SPIN_CLOCK__
     lda musiccounter    
     cmp #8
     bne :+
         lda #0
         sta musiccounter
+        .ifndef __DISABLE_MUSIC__
         jsr music
+        .endif
 :   
 .if .defined(__ATARI__) 
     jsr fade_sfx
@@ -624,7 +401,7 @@ seconds10: .byte 0
 minutes10: .byte 0
 .ENDPROC
 
-.if !(.defined(__APPLE2__) || .defined(__RC6502__))
+.ifndef __DISABLE_MUSIC__
 MUTED      = %00000001
 NOT_MUTED  = %10000000
 PLAYING    = %00000010
