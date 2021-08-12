@@ -81,6 +81,16 @@ main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc atari_c64_visuals.inc
 	cl65 -t c64 -C MyC64.cfg -u __EXEHDR__ main.s -o main.prg
 
 ##############################
+#   Commodore 16 and Plus/4
+
+plus4: main-plus4.prg
+	~/Applications/VICE.app/Contents/Resources/bin/xplus4 main-plus4.prg
+
+main-plus4.prg: main.s MyPlus4.cfg my_plus4.inc minesweeper.inc atari_c64_visuals.inc
+	cl65 -t plus4 -C MyPlus4.cfg -u __EXEHDR__ main.s -o main-plus4.prg
+
+
+##############################
 #   RC6502
 #   https://github.com/tebl/RC6502-Apple-1-Replica
 

@@ -32,6 +32,13 @@ nop
 ldx RANDOM
 .endmacro
 .code
+.elseif .defined(__PLUS4__)
+__SOFTWARE_CURSOR__ = 1
+__DISABLE_MUSIC__ = 1
+.include "apple2_rand.inc"
+.include "plus4.inc"
+TEMP  = $49
+.CODE
 .elseif .defined(__C64__)
 
 .include "c64.inc"
@@ -92,6 +99,10 @@ SOFTWARE_RANDOM_CODE
 
 .elseif .defined(__C64__)
 .include "my_c64.inc"
+.elseif .defined(__PLUS4__)
+.include "my_plus4.inc"
+.code
+SOFTWARE_RANDOM_CODE
 .endif
 
 .CODE
@@ -636,6 +647,9 @@ state: .byte %00000000
 @ScreenPos = HudScreen+40
 @Additive = 48
 .elseif .defined(__C64__)
+@ScreenPos = $07C0
+@Additive = 48
+.elseif .defined(__PLUS4__)
 @ScreenPos = $07C0
 @Additive = 48
 .endif
