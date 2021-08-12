@@ -2,12 +2,13 @@ releases: main.dsk main.xex main.ssd main.prg main.hex
 
 clean:
 	rm -f \
-	    main.dsk main.as \
+	    main.dsk main.as tools/a2in \
 	    main.xex \
 	    main.ssd main.bbc main.inf main !boot !boot.inf \
 	    main.prg \
+	    main.hex main.rc6 \
 	    main.o main.bin \
-
+	    #
 
 ####################################################################
 #   Run, release and build targets
