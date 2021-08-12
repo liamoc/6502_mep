@@ -7,7 +7,7 @@ clean:
 	    main.ssd main.bbc main.inf main !boot !boot.inf \
 	    main.prg \
 	    main.hex main.rc6 \
-	    main.o main.bin \
+	    main.o \
 	    #
 
 ####################################################################
