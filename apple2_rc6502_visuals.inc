@@ -1,7 +1,4 @@
 
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
 .proc print_board
     ldy #0
     ldx #0

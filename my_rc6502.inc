@@ -22,6 +22,9 @@ LEDS_TICKS2 = $32
 .endmacro
 .macro show_cursor
 .endmacro 
+.MACRO CLEAR_CURSOR
+jsr clear_cursor
+.ENDMACRO
 .MACRO start_irq
 nop
 .ENDMACRO
