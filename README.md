@@ -7,6 +7,7 @@ It compiles (using the provided makefile) using the `ca65` assembler from the `c
 
 - Atari 400, 800, and XE/XL series machines (`main.xex`)
 - Commodore 64 machines (`main.prg`)
+- Commodore Plus/4 and Commodore 16 machines (`main-plus4.prg`)
 - Apple ][ (both monochrome and colour displays) (`main.dsk`), also works on later Apple II models.
 - BBC Micro (`main.ssd`) (should work on all models, and on Electron)
 - RC6502 Apple 1 Replica with a MC6847 VDU and Joystick Controller (`main.hex` is a dump of wozmon input, `main.rc6` is a raw binary of the same)
