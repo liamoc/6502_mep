@@ -9,6 +9,7 @@ clean:
 	    main.xex \
 	    main.ssd main.bbc main.inf main !boot !boot.inf \
 	    main.prg \
+	    main-plus4.prg \
 	    main.hex main.rc6 \
 	    main.o \
 	    #
