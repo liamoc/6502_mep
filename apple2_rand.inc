@@ -1,19 +1,29 @@
+.ifndef __BBC__
 SEED0 = $E0;
 SEED1 = $E1;
 SEED2 = $E2
 SEED3 = $E3
 TMP = $52
 MOD = TMP+4
+.else 
+SEED0 = $A0;
+SEED1 = $A1;
+SEED2 = $A2
+SEED3 = $A3
+TMP = $A4
+MOD = TMP+4
+.endif
+
 .macro LDX_RANDOM
 lda #$FF
 jsr RANDOM8
 tax
 .endmacro
 .MACRO INITIALISE_RANDOM
-lda RNDL
+lda $0240
 sta SEED0
 sta SEED3
-lda RNDH
+lda $0240
 sta SEED1
 sta SEED2
 .ENDMACRO

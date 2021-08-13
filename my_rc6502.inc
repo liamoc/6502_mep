@@ -220,6 +220,7 @@ lda #0
 sta LAST_KEY
 .proc rc6502_keyin
 jsr clock
+
 INC   RNDL
 BNE   KEYIN2     ;INCR RND NUMBER
 INC   RNDH

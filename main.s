@@ -13,7 +13,7 @@ TEMP  = $49
 .elseif .defined(__BBC__)
 __SOFTWARE_CURSOR__ = 1
 .include "apple2_rand.inc"
-TEMP  = $49
+TEMP  = $DF
 .code
 .elseif .defined (__APPLE2__)
 __SPIN_CLOCK__ = 1
