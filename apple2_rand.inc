@@ -14,21 +14,7 @@ TMP = $A4
 MOD = TMP+4
 .endif
 
-.macro LDX_RANDOM
-lda #$FF
-jsr RANDOM8
-tax
-.endmacro
-.MACRO INITIALISE_RANDOM
-lda $0240
-sta SEED0
-sta SEED3
-lda $0240
-sta SEED1
-sta SEED2
-.ENDMACRO
 
-.macro SOFTWARE_RANDOM_CODE
 
 .proc RAND
          LDA SEED0 ; TMP = SEED * 2
@@ -168,4 +154,3 @@ R8B:     ROR        ; shift product right
          BNE R8A
          RTS
 .ENDPROC
-.ENDMACRO

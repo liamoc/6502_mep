@@ -2,27 +2,64 @@
 __DISABLE_MUSIC__ = 1
 __SPIN_CLOCK__ = 1
 __SOFTWARE_CURSOR__ = 1
-.include "apple2_rand.inc"
 LEDS = $A000
 KEYS = $A000
 VDU_WINDOW = $8C00
 VDU_MODE = $8800
 VDU_BASE = $8000
 TEMP  = $49
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
 .CODE
 .elseif .defined(__BBC__)
 __SOFTWARE_CURSOR__ = 1
-.include "apple2_rand.inc"
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda $0240
+sta SEED0
+sta SEED3
+lda $0240
+sta SEED1
+sta SEED2
+.ENDMACRO
 TEMP  = $DF
 .code
 .elseif .defined (__APPLE2__)
 __SPIN_CLOCK__ = 1
 __SOFTWARE_CURSOR__ = 1
 __DISABLE_MUSIC__ = 1
-.include "apple2_rand.inc"
 .include "apple2.inc"
 TEMP  = $49
 .segment "LOWCODE"
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
+
 .elseif .defined(__ATARI__)
 .include "atari.inc"
 .MACRO INITIALISE_RANDOM
@@ -73,15 +110,16 @@ Main:
 
 .ifdef __RC6502__
 .include "my_rc6502.inc"
-SOFTWARE_RANDOM_CODE
+.include "apple2_rand.inc"
 
 .elseif .defined(__BBC__)
 .include "my_bbc.inc"
-SOFTWARE_RANDOM_CODE
+.include "apple2_rand.inc"
 
 .elseif .defined(__APPLE2__)
 .include "my_apple2.inc"
-SOFTWARE_RANDOM_CODE
+.include "apple2_rand.inc"
+
 .segment "EXEHDR"
 .word Main ; 2 byte BLAOD address
 .word END - Main ; 2 byte BLOAD size
