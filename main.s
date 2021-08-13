@@ -72,7 +72,19 @@ ldx RANDOM
 .elseif .defined(__PLUS4__)
 __DISABLE_BASS__ = 1
 __SOFTWARE_CURSOR__ = 1
-.include "apple2_rand.inc"
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
 .include "plus4.inc"
 TEMP  = $2A
 .CODE
@@ -138,9 +150,9 @@ Main:
 .elseif .defined(__C64__)
 .include "my_c64.inc"
 .elseif .defined(__PLUS4__)
+.include "apple2_rand.inc"
 .include "my_plus4.inc"
 .code
-SOFTWARE_RANDOM_CODE
 .endif
 
 .CODE
