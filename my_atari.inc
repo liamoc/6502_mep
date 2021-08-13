@@ -1,6 +1,6 @@
 MAX_HEIGHT=12
 MAX_WIDTH=20
-
+VRAM = BoardScreen
 .MACRO start_irq
     pha
     txa
@@ -380,129 +380,6 @@ CURSOR_TOP_MARGIN = (1*16)+12
 .ENDPROC
 
 
-.PROC print_board
-    ; PTR stores the current row in video ram
-    ; Y stores the position in current row
-    ; X stores the current index into the board
-    lda #<BoardScreen
-    sta PTR
-    lda #>BoardScreen
-    sta PTR+1
-    ldy #0
-    ldx #0
-@loop:  lda board,x
-        and #UNCOVERED
-        cmp #UNCOVERED
-        beq @check_mine
-            ;it's covered, is there a flag?
-            lda board, x
-            and #FLAG_PLACED
-            cmp #FLAG_PLACED
-            bne :+
-                ; cell is flag                 
-                lda #(14 + 128 + 64)
-                sta TEMP
-                jmp @draw
-:           ; cell is covered            
-            lda #(12 + 64)
-            sta TEMP
-        jmp @draw
-@check_mine:
-        lda board, X
-        and #MINE_PLACED
-        cmp #MINE_PLACED
-        bne :+
-            ; mine is here            
-            lda #(15 + 128 + 64) ; '*' char
-            sta TEMP     
-            jmp @draw
-:       lda board,X 
-        and #NEIGHBOURS
-        cmp #0 
-        bne :+
-            ; no neighbouring mines            
-            lda #64; ' ' char
-            sta TEMP          
-            jmp @draw
-        ; number for neighbouring mines
-:       clc 
-        adc #(128 +64) 
-        sta TEMP
-@draw:  tya 
-        pha
-        asl 
-        tay        
-        lda TEMP
-        sta (PTR),Y
-        pla
-        tay
-        iny    
-        cpy width 
-        bne @continue
-            ; we are at the end of the row, move the pointers.
-            ldy #0
-            lda PTR
-            clc
-            adc #80
-            sta PTR
-            bcc @continue
-                inc PTR+1
-@continue:
-        inx
-        cpx size
-        beq :+
-        jmp @loop
-:   rts
-.ENDPROC
-
-.PROC print_intersections
-    ; PTR stores the current row in video ram
-    ; Y stores the position in current row
-    ; X stores the current index into the board
-    lda #<(BoardScreen + 41)
-    sta PTR
-    lda #>(BoardScreen + 41)
-    sta PTR+1
-    ldy #0
-    ldx #0
-@loop:  tya 
-        pha 
-        lda intersections,X
-        tay 
-        lda @char_table,y
-        sta TEMP
-        pla 
-        tay         
-        tya 
-        pha
-        asl 
-        tay        
-        lda TEMP
-        sta (PTR),Y
-        pla
-        tay
-        iny    
-        cpy width_m1 ; M1 (-1) because we don't print the right edge
-        bne :+  
-            ; we are at the end of the row
-            inx
-            ldy #0
-            lda PTR
-            clc
-            adc #80
-            sta PTR
-            bcc :+
-                inc PTR+1
-:       inx
-        cpx size_m1
-        bcs :+
-        jmp @loop
-:   rts
-@char_table:  
-;     blank ;tl ;tr ;tw ;bl ;lc ;lr ;BR ;br ;rl :rc :BL ;bw ;TR ;TL ;CL
-.byte 12+64,    20+64, 21+64, 11+64, 22+64,  11+64, 25+64, 16+64, 23+64, 24+64, 13+64, 17+64,13+64, 18+64, 19+64, 0+64
-.ENDPROC
-
 
 .PROC print_title
     lda #<(BoardScreen + 41)
@@ -711,7 +588,7 @@ HudScreen:
 .res (40*5),0
 .align 1024
 HighResChars:
-.incbin "chars_hires.bin", 0,512
+.incbin "chars_hires-charset.bin", 0,512
 LowResChars:
 .incbin "chars_4c.bin",0,512
 .align 1024 

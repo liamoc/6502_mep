@@ -28,9 +28,6 @@ nop
 .MACRO ack_irq
 rts
 .ENDMACRO
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
 .MACRO GETIN
 jsr rc6502_keyin
 .ENDMACRO 

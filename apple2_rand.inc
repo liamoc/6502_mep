@@ -1,8 +1,8 @@
-SEED0 = $A0;
-SEED1 = $A1;
-SEED2 = $A2
-SEED3 = $A3
-TMP = $A4
+SEED0 = $E0;
+SEED1 = $E1;
+SEED2 = $E2
+SEED3 = $E3
+TMP = $52
 MOD = TMP+4
 .macro LDX_RANDOM
 lda #$FF

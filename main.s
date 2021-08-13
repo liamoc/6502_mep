@@ -33,11 +33,11 @@ ldx RANDOM
 .endmacro
 .code
 .elseif .defined(__PLUS4__)
+__DISABLE_BASS__ = 1
 __SOFTWARE_CURSOR__ = 1
-__DISABLE_MUSIC__ = 1
 .include "apple2_rand.inc"
 .include "plus4.inc"
-TEMP  = $49
+TEMP  = $2A
 .CODE
 .elseif .defined(__C64__)
 
@@ -109,6 +109,7 @@ SOFTWARE_RANDOM_CODE
 
 .PROC menu_loop
     GETIN  
+
     cmp #KEY_FW
     beq full_width
     cmp #KEY_EASIER
@@ -184,6 +185,7 @@ full_width:
     .ifndef __DISABLE_MUSIC__
     jsr stop_music
     .endif
+
     lda #26
     sta difficulty
     lda #(MAX_WIDTH)
@@ -341,16 +343,23 @@ full_width:
 .endif
     inc musiccounter
 .ifndef __SPIN_CLOCK__
-    lda musiccounter    
-    cmp #8
-    bne :+
+    lda musiccounter
+    cmp #8 
+    bne no_music_pulse
         lda #0
         sta musiccounter
-        .ifndef __DISABLE_MUSIC__
+        .ifdef __PLUS4__
+        lda CURSOR_ENABLED
+        cmp #0
+        beq :+
+        jsr flash_cursor
+        :
+        .endif 
+        .if !(.defined(__DISABLE_MUSIC__))
         jsr music
         .endif
-:   
-.if .defined(__ATARI__) 
+no_music_pulse:   
+.if .defined(__ATARI__) || .defined(__PLUS4__) 
     jsr fade_sfx
 .endif
     lda state
@@ -358,7 +367,11 @@ full_width:
     beq @done
 
     inc subcounter
+.ifdef __PLUS4__ 
+@subcounter_cap = 100
+.else 
 @subcounter_cap = 56
+.endif
 .else 
 @subcounter_cap = 255
 .if .defined(__RC6502__)
@@ -430,7 +443,7 @@ NOT_CONCLUDING = CONCLUDING ^ $FF
     cmp #PLAYING
     beq :+
         rts
-:   ldy bass_position
+:   ldy bass_position 
     lda bass_line, y
     cmp #$FE
     bne :+
@@ -572,9 +585,11 @@ state: .byte %00000000
 .if (.defined(__APPLE2__) || .defined(__RC6502__))
 .include "apple2_rc6502_visuals.inc"
 .elseif !(.defined(__BBC__))
-.include "atari_c64_visuals.inc"
+.include "atari_c64_c16_visuals.inc"
 .endif 
-
+.if (.defined(__C64__) || .defined(__PLUS4__))
+.include "c64_c16_common.inc"
+.endif
 .PROC display_clock
 .ifdef __BBC__
     lda #$00
@@ -650,7 +665,7 @@ state: .byte %00000000
 @ScreenPos = $07C0
 @Additive = 48
 .elseif .defined(__PLUS4__)
-@ScreenPos = $07C0
+@ScreenPos = (VRAM + $03C0)
 @Additive = 48
 .endif
     lda clock::state

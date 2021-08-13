@@ -25,9 +25,6 @@ KEY_EASIER = $8A
 KEY_START = $8D
 KEY_CHARSWITCH = $C3
 
-.MACRO CLEAR_CURSOR
-jsr clear_cursor
-.ENDMACRO
 .MACRO GETIN
 jsr apple_keyin
 .ENDMACRO 

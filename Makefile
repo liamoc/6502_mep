@@ -47,7 +47,7 @@ tools/a2in: tools/a2tools.c
 atari: main.xex
 	~/Applications/Atari800MacX/Atari800MacX.app/Contents/MacOS/Atari800MacX main.xex
 
-main.xex: main.s MyAtari.cfg my_atari.inc minesweeper.inc atari_c64_visuals.inc
+main.xex: main.s MyAtari.cfg my_atari.inc minesweeper.inc atari_c64_c16_visuals.inc chars_hires-charset.bin chars_4c.bin
 	cl65 -t atari -C MyAtari.cfg  main.s -o main.xex
 
 
@@ -77,7 +77,7 @@ main.inf: main.bbc
 c64: main.prg
 	~/Applications/VICE.app/Contents/Resources/bin/x64sc main.prg
 
-main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc atari_c64_visuals.inc
+main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc atari_c64_c16_visuals.inc c64_c16_common.inc chars_hires-charset.bin
 	cl65 -t c64 -C MyC64.cfg -u __EXEHDR__ main.s -o main.prg
 
 ##############################
@@ -86,7 +86,7 @@ main.prg: main.s MyC64.cfg my_c64.inc minesweeper.inc atari_c64_visuals.inc
 plus4: main-plus4.prg
 	~/Applications/VICE.app/Contents/Resources/bin/xplus4 main-plus4.prg
 
-main-plus4.prg: main.s MyPlus4.cfg my_plus4.inc minesweeper.inc atari_c64_visuals.inc
+main-plus4.prg: main.s MyPlus4.cfg my_plus4.inc minesweeper.inc atari_c64_c16_visuals.inc c64_c16_common.inc chars_hires-charset.bin
 	cl65 -t plus4 -C MyPlus4.cfg -u __EXEHDR__ main.s -o main-plus4.prg
 
 
