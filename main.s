@@ -1,4 +1,22 @@
-.if .defined(__RC6502__)
+.if .defined(__VIC20__)
+.include "vic20_header.inc"
+__SOFTWARE_CURSOR__ = 1
+TEMP  = $49
+.macro LDX_RANDOM
+lda #$FF
+jsr RANDOM8
+tax
+.endmacro
+.MACRO INITIALISE_RANDOM
+lda RNDL
+sta SEED0
+sta SEED3
+lda RNDH
+sta SEED1
+sta SEED2
+.ENDMACRO
+.CODE
+.elseif .defined(__RC6502__)
 __DISABLE_MUSIC__ = 1
 __SPIN_CLOCK__ = 1
 __SOFTWARE_CURSOR__ = 1
@@ -89,7 +107,6 @@ sta SEED2
 TEMP  = $2A
 .CODE
 .elseif .defined(__C64__)
-
 .include "c64.inc"
 .macro INITIALISE_RANDOM
     lda #0
@@ -119,8 +136,11 @@ Main:
 .endif
 
 .include "minesweeper.inc"
+.ifdef __VIC20__
+.include "my_vic20.inc"
+.include "apple2_rand.inc"
 
-.ifdef __RC6502__
+.elseif .defined(__RC6502__)
 .include "my_rc6502.inc"
 .include "apple2_rand.inc"
 
@@ -254,8 +274,10 @@ full_width:
     jsr reveal_zeros
     jsr print_board    
     jsr print_intersections    
+    .ifndef __VIC20__
     jsr print_horizontals
     jsr print_verticals
+    .endif
     lda #46
     sta difficulty
     sta flags
@@ -268,8 +290,10 @@ full_width:
     jsr initialise_board
     jsr print_board
     jsr print_intersections
+    .ifndef __VIC20__
     jsr print_horizontals
     jsr print_verticals
+    .endif
     .if !(.defined(__DISABLE_MUSIC__))
     jsr stop_music
     .endif
@@ -294,8 +318,10 @@ full_width:
     sta CURSOR_ENABLED
 .endif     
     jsr print_board
+    .ifndef __VIC20__
     jsr print_horizontals
     jsr print_verticals
+    .endif
     jsr print_intersections
 .ifdef __SOFTWARE_CURSOR__
     lda #$FF
@@ -387,7 +413,7 @@ full_width:
     jmp main_loop    
 .ENDPROC
 
-.PROC clock    
+.PROC clock
 .if .defined(__RC6502__)
     jsr leds_tick
 .endif
@@ -398,7 +424,7 @@ full_width:
     bne no_music_pulse
         lda #0
         sta musiccounter
-        .ifdef __PLUS4__
+        .ifdef __SOFTWARE_CURSOR__
         lda CURSOR_ENABLED
         cmp #0
         beq :+
@@ -409,7 +435,7 @@ full_width:
         jsr music
         .endif
 no_music_pulse:   
-.if .defined(__ATARI__) || .defined(__PLUS4__) 
+.if .defined(__ATARI__) || .defined(__PLUS4__) || .defined(__VIC20__)
     jsr fade_sfx
 .endif
     lda state
@@ -466,6 +492,7 @@ no_music_pulse:
     jmp display_clock
 @done: 
     ack_irq
+.data
 musiccounter: .byte 0
 state: .byte 0
 subcounter: .byte 0
@@ -473,6 +500,7 @@ minutes: .byte 0
 seconds: .byte 0
 seconds10: .byte 0
 minutes10: .byte 0
+.code
 .ENDPROC
 
 .ifndef __DISABLE_MUSIC__
@@ -545,7 +573,6 @@ NOT_CONCLUDING = CONCLUDING ^ $FF
 bass_line:       .byte 1,0, 2,0, 0,0, 2,0, 0,0, 3,0, 2,0, 1,0,$FF
 conclusion_bass: .byte 1,0, 0,0, 2,0, 2,0, 0,0, 0,0, 2,0, 2,0
                  .byte 0,0, 0,0, 3,0, 3,0, 2,0, 0,0, 0,0, 0,0,$FE
-bass_position:   .byte 0
 treble_line:
    .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
    .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -565,9 +592,11 @@ treble_line:
 conclusion_treble:
    .byte 6,0,0,0,4,0,4,0,5,0,0,0,3,0,0,0
    .byte 2,0,0,0,3,0,0,0,2,0,0,0,0,0,0,0, $FE
-
+.data
+bass_position:   .byte 0
 treble_position: .byte 0
 state: .byte %00000000
+.code
 .ENDPROC
 
 .PROC conclude_music 
@@ -587,7 +616,7 @@ state: .byte %00000000
 .ENDPROC
 .PROC stop_music
     lda music::state
-    and #MUTED
+    and #0
     sta music::state
     SILENCE
     sta music::treble_position
@@ -634,6 +663,8 @@ state: .byte %00000000
 
 .if (.defined(__APPLE2__) || .defined(__RC6502__))
 .include "apple2_rc6502_visuals.inc"
+.elseif (.defined(__VIC20__))
+.include "vic20_visuals.inc"
 .elseif !(.defined(__BBC__))
 .include "atari_c64_c16_visuals.inc"
 .endif 
@@ -717,6 +748,9 @@ state: .byte %00000000
 .elseif .defined(__PLUS4__)
 @ScreenPos = (VRAM + $03C0)
 @Additive = 48
+.elseif .defined(__VIC20__)
+@ScreenPos = (VRAM + $01C0 + 22 + 11 + 3)
+@Additive = 48
 .endif
     lda clock::state
     cmp #0
@@ -752,7 +786,9 @@ cmp #0
 beq :+
 jsr draw_string
 : ack_irq
+.data
 ClockData: .asciiz "00:00"
+.code
 .else
 ack_irq
 .endif

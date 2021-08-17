@@ -90,6 +90,15 @@ plus4: main-plus4.prg
 main-plus4.prg: main.s MyPlus4.cfg my_plus4.inc minesweeper.inc atari_c64_c16_visuals.inc c64_c16_common.inc chars_hires-charset.bin
 	cl65 -t plus4 -C MyPlus4.cfg -u __EXEHDR__ main.s -o main-plus4.prg
 
+##############################
+#   Commodore VIC-20 (cartridge)
+
+vic20: main.crt
+	~/Applications/VICE.app/Contents/Resources/bin/xvic -cartA main.crt
+
+main.crt: main.s MyVIC20.cfg my_vic20.inc minesweeper.inc chars_vic20-charset.bin vic20_header.inc vic20_visuals.inc
+	cl65 -t vic20 -C MyVIC20.cfg -u __EXEHDR__ main.s -o main.crt
+
 
 ##############################
 #   RC6502

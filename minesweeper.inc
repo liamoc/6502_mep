@@ -7,7 +7,7 @@ TOP_LEFT      = %0001
 TOP_RIGHT     = %0010
 BOTTOM_LEFT   = %0100
 BOTTOM_RIGHT  = %1000
-
+.data
 board:         .res 240, 0
 intersections: .res 240, 0
 difficulty:    .byte 46
@@ -22,7 +22,7 @@ cursor_row:    .byte 0
 cursor_col:    .byte 0
 
 .FEATURE c_comments
-
+.code
 .PROC initialise_board
     INITIALISE_RANDOM
     ; zero out everything
